@@ -6,6 +6,8 @@
 
 !buildfile
 
+!*.png
+
 !README.md
 
 !.gitignore

@@ -4,7 +4,10 @@
 
 using namespace std;
 
-game::game() { init_platforms(); }
+game::game() {
+  init_platforms();
+  init_player();
+}
 
 game::~game() {}
 
@@ -26,6 +29,8 @@ void game::update() {
   const auto dt = chrono::duration<float>(new_time - old_time).count();
   old_time = new_time;
 
+  player.animate(dt);
+
   // Apply gravity.
   player.a.y += 200;
 
@@ -33,6 +38,7 @@ void game::update() {
   player.v += dt * player.a;
 
   // Detect and resolve platform collisions.
+  player.ground_contact = false;
   auto new_p = player.p + dt * player.v;
   const aabb new_hit_box{new_p - 0.5f * player.size,
                          new_p + 0.5f * player.size};
@@ -46,11 +52,13 @@ void game::update() {
     if (!((cache.tmin <= cache.tmax) && (cache.tmax >= 0) &&
           (cache.tmin <= dt)))
       continue;
+    if (!cache.xhit && player.v.y > 0) player.ground_contact = true;
 
     const auto p_scale = dot(player.v, cache.normal);
     new_p += (1e-2f - (dt - cache.tmin) * p_scale) * cache.normal;
     const auto v_scale = min(0.0f, p_scale);
     player.v -= v_scale * cache.normal;
+
     // }
   }
 
@@ -63,6 +71,53 @@ void game::update() {
 
   // Update acceleration.
   player.a = float32x2{};
+}
+
+void game::init_player() {
+  if (!player.texture.loadFromFile("adventurer-sheet.png"))
+    throw runtime_error("Could not load given image!");
+  player.size.y = 4;
+  player.size.x = 1.5;
+  player.texture_rect = {0, 0, 50, 37};
+}
+
+void game::character::animate(float dt) {
+  // Update player looking direction.
+  if (v.x > 0)
+    right = true;
+  else if (v.x < 0)
+    right = false;
+
+  once = false;
+  if (!ground_contact) {
+    if (v.y <= 0) {
+      current_animation = &jump_animation;
+      once = true;
+    } else
+      current_animation = &fall_animation;
+  } else {
+    if (v.x != 0)
+      current_animation = &run_animation;
+    else
+      current_animation = &idle_animation;
+  }
+
+  if (frame >= current_animation->size()) {
+    if (once)
+      frame = current_animation->size() - 1;
+    else
+      frame = 0;
+  }
+
+  // Update texture rect.
+  const auto [i, j] = (*current_animation)[frame];
+  texture_rect.left = j * texture_rect.width;
+  texture_rect.top = i * texture_rect.height;
+
+  time += dt;
+  if (time < frame_time) return;
+  time = 0;
+  ++frame;
 }
 
 void game::init_platforms() {

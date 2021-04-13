@@ -13,6 +13,7 @@ application::application() {
   window.create(sf::VideoMode(800, 450), "Game", sf::Style::Default, settings);
   window.setVerticalSyncEnabled(true);
   window.setKeyRepeatEnabled(false);
+  window.setMouseCursorVisible(false);
   // resize();
 
   view.setCenter({0, 0});
@@ -129,12 +130,17 @@ void application::update_camera() {
 }
 
 void application::render_player() {
-  sf::RectangleShape box(
-      {current_game.player.size.x, current_game.player.size.y});
-  box.setOrigin(0.5 * current_game.player.size.x,
-                0.5 * current_game.player.size.y);
+  const auto ratio = float(current_game.player.texture_rect.width) /
+                     current_game.player.texture_rect.height;
+  const auto scale = current_game.player.size.y;
+
+  sf::RectangleShape box({ratio, 1});
+  box.setOrigin(0.5 * ratio, 0.5);
   box.setPosition(current_game.player.p.x, current_game.player.p.y);
-  box.setFillColor(sf::Color::Red);
+  // box.setFillColor(sf::Color::Red);
+  box.setTexture(&current_game.player.texture);
+  box.setTextureRect(current_game.player.texture_rect);
+  box.setScale((current_game.player.right) ? (scale) : (-scale), scale);
   window.draw(box);
 }
 

@@ -56,4 +56,6 @@ class application {
   void update_camera();
   void render_player();
   void render_platforms();
+
+ private:
 };
