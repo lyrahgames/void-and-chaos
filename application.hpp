@@ -3,6 +3,7 @@
 //
 #include <SFML/Graphics.hpp>
 //
+#include <actions_handler.hpp>
 #include <game.hpp>
 
 class application {
@@ -14,6 +15,7 @@ class application {
 
  private:
   void process_events();
+  void update();
   void render();
   void resize();
 
@@ -50,12 +52,16 @@ class application {
   float min_cell_size = 15.0f;
   float max_cell_size = 40.0f;
 
+  actions_handler actions{};
+
  private:
   game current_game;
 
   void update_camera();
   void render_player();
   void render_platforms();
+
+  void zoom(float delta);
 
  private:
 };

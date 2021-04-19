@@ -20,6 +20,17 @@ application::application() {
   view.setSize(window.getSize().x, window.getSize().y);
   view.zoom(1 / cell_size);
   window.setView(view);
+
+  actions.set("close", {{sf::Event::KeyPressed, sf::Keyboard::Escape}},
+              [this](auto data) { window.close(); });
+  actions.set("jump", {{sf::Event::KeyPressed, sf::Keyboard::Space}},
+              [this](auto data) { current_game.jump(); });
+  actions.set("zoom", {{sf::Event::MouseWheelScrolled, 0}},
+              [this](auto data) { zoom(data->mouse_scroll_delta); });
+  actions.set("right", {{actions_handler::key_down, sf::Keyboard::Right}},
+              [this](auto data) { current_game.right(); });
+  actions.set("left", {{actions_handler::key_down, sf::Keyboard::Left}},
+              [this](auto data) { current_game.left(); });
 }
 
 application::~application() {}
@@ -27,8 +38,7 @@ application::~application() {}
 void application::execute() {
   while (window.isOpen()) {
     process_events();
-    current_game.update();
-    update_camera();
+    update();
     render();
   }
 }
@@ -36,39 +46,27 @@ void application::execute() {
 void application::process_events() {
   sf::Event event{};
   while (window.pollEvent(event)) {
+    // Hard-Coded Events and Actions
     switch (event.type) {
       case sf::Event::Closed:
         window.close();
-        break;
-
-      case sf::Event::MouseWheelMoved:
-        cell_size *= exp(-event.mouseWheel.delta * 0.05f);
-        cell_size = clamp(cell_size, min_cell_size, max_cell_size);
-        resize();
         break;
 
       case sf::Event::Resized:
         resize();
         break;
 
-      case sf::Event::KeyPressed:
-        switch (event.key.code) {
-          case sf::Keyboard::Escape:
-            window.close();
-            break;
+      case sf::Event::GainedFocus:
+        actions.enable();
+        break;
 
-          case sf::Keyboard::Space:
-            current_game.jump();
-            break;
-        }
+      case sf::Event::LostFocus:
+        actions.disable();
         break;
     }
+    // Dynamic Event Handling
+    actions.process_event(event);
   }
-
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) current_game.right();
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) current_game.left();
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) current_game.up();
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) current_game.down();
 
   if (sf::Joystick::isConnected(current_gamepad.id)) {
     current_gamepad.update();
@@ -78,6 +76,12 @@ void application::process_events() {
     x = (abs(x) < 10) ? 0 : (x / 5);
     current_game.move(x);
   }
+}
+
+void application::update() {
+  actions.update();
+  current_game.update();
+  update_camera();
 }
 
 void application::gamepad::update() {
@@ -151,4 +155,10 @@ void application::render_platforms() {
     box.setFillColor(sf::Color::Black);
     window.draw(box);
   }
+}
+
+void application::zoom(float delta) {
+  cell_size *= exp(-delta * 0.05f);
+  cell_size = clamp(cell_size, min_cell_size, max_cell_size);
+  resize();
 }
