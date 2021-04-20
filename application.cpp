@@ -21,19 +21,21 @@ application::application() {
   view.zoom(1 / cell_size);
   window.setView(view);
 
-  actions.set("close", {{sf::Event::KeyPressed, sf::Keyboard::Escape}},
-              [this](auto data) { window.close(); });
-  actions.set("jump", {{sf::Event::KeyPressed, sf::Keyboard::Space}},
-              [this](auto data) { current_game.jump(); });
-  actions.set("zoom", {{sf::Event::MouseWheelScrolled, 0}},
-              [this](auto data) { zoom(data->mouse_scroll_delta); });
-  actions.set("right", {{actions_handler::key_down, sf::Keyboard::Right}},
-              [this](auto data) { current_game.right(); });
-  actions.set("left", {{actions_handler::key_down, sf::Keyboard::Left}},
-              [this](auto data) { current_game.left(); });
-}
+  actions.set(
+      "zoom",
+      vector<actions_handler::event>{{sf::Event::MouseWheelScrolled, 0}},
+      [this](auto data) { zoom(data->mouse_scroll_delta); });
 
-application::~application() {}
+  actions                                                      //
+      ("close", "esc", [this](auto data) { window.close(); })  //
+      // ("jump", "space", [this](auto data) { current_game.jump(); })  //
+      ("left", "~left", [this](auto data) { current_game.left(); })     //
+      ("right", "~right", [this](auto data) { current_game.right(); })  //
+      ("jump", "space")                                                 //
+      ("jump", [this](auto data) { current_game.jump(); })              //
+      //
+      ;
+}
 
 void application::execute() {
   while (window.isOpen()) {

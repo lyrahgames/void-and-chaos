@@ -9,7 +9,6 @@
 class application {
  public:
   application();
-  ~application();
 
   void execute();
 

@@ -26,6 +26,10 @@ class actions_handler {
       // These operations are not save and
       // should not be used from the outside.
       type(sf::Event::EventType t) : id(static_cast<int>(t)) {}
+      // type& operator=(sf::Event::EventType t) {
+      //   id = static_cast<int>(t);
+      //   return *this;
+      // }
       type(realtime t) : id(static_cast<int>(t)) {}
       operator realtime() { return static_cast<realtime>(id); }
       bool operator==(sf::Event::EventType t) const {
@@ -115,8 +119,25 @@ class actions_handler {
   void update();
 
   // Set actions from the outside.
-  void set(const string& name, const std::vector<event>& events,
-           callback callback);
+  void set(const string& name, const std::vector<event>& events, callback call);
+  actions_handler& set(const string& name, const string& binding_code,
+                       callback call);
+
+  actions_handler& set(const string& name, callback call);
+  actions_handler& set(const string& name, const string& binding_code);
+
+  auto& operator()(const string& name, const string& binding_code,
+                   callback call) {
+    return set(name, binding_code, call);
+  }
+  auto& operator()(const string& name, callback call) {
+    return set(name, call);
+  }
+  auto& operator()(const string& name, const string& binding_code) {
+    return set(name, binding_code);
+  }
+
+  std::vector<event> parse_binding(const string& name);
 
  private:
   std::unordered_map<string, action> actions;
