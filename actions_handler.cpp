@@ -10,7 +10,7 @@ using namespace std;
 void actions_handler::set(const string& name, const std::vector<event>& events,
                           callback call) {
   auto& [b, c] = actions[name];
-  b = {events};
+  b = binding{events};
   c = call;
 }
 
@@ -112,7 +112,7 @@ actions_handler& actions_handler::set(const string& name, callback call) {
 actions_handler& actions_handler::set(const string& name,
                                       const string& binding_code) {
   auto& [b, c] = actions[name];
-  b = {parse_binding(binding_code)};
+  b = binding{parse_binding(binding_code)};
   return *this;
 }
 
@@ -270,4 +270,27 @@ auto actions_handler::parse_binding(const string& source) -> vector<event> {
   else
     events.push_back({sf::Event::KeyPressed, key_map.at(key)});
   return events;
+}
+
+actions_handler& actions_handler::load(const string& file_path) {
+  ifstream file{file_path, ios::in};
+  if (!file.is_open())
+    throw runtime_error("Error: 'actions_handler' failed to open file '" +
+                        file_path + "'!");
+
+  string name;
+  string binding;
+  while (getline(file, name, ':')) {
+    getline(file, binding);
+    set(name, binding);
+    cout << "binding added: " << name << '\n';
+  }
+
+  return *this;
+}
+
+actions_handler& actions_handler::print_invalid_actions() {
+  for (auto& [name, action] : actions)
+    if (!action.is_valid()) cout << "Invalid Action: " << name << '\n';
+  return *this;
 }

@@ -21,20 +21,21 @@ application::application() {
   view.zoom(1 / cell_size);
   window.setView(view);
 
-  actions.set(
-      "zoom",
-      vector<actions_handler::event>{{sf::Event::MouseWheelScrolled, 0}},
-      [this](auto data) { zoom(data->mouse_scroll_delta); });
+  actions.set("zoom",
+              vector<actions_handler::event>{
+                  {sf::Event::MouseWheelScrolled,
+                   0}},  // "ms:wheel" "ms:move" "ms:left" "ms:right", "kb:left"
+                         // "k:jump" "c:a" "js:x", "js:y", "c:start" "js:#10"
+              [this](auto data) { zoom(data->mouse_scroll_delta); });
 
-  actions                                                      //
-      ("close", "esc", [this](auto data) { window.close(); })  //
-      // ("jump", "space", [this](auto data) { current_game.jump(); })  //
-      ("left", "~left", [this](auto data) { current_game.left(); })     //
-      ("right", "~right", [this](auto data) { current_game.right(); })  //
-      ("jump", "space")                                                 //
-      ("jump", [this](auto data) { current_game.jump(); })              //
-      //
+  actions.load("bindings.bind");
+  actions                                                     //
+      ("close", [this](auto data) { window.close(); })        //
+      ("jump", [this](auto data) { current_game.jump(); })    //
+      ("left", [this](auto data) { current_game.left(); })    //
+      ("right", [this](auto data) { current_game.right(); })  //
       ;
+  actions.print_invalid_actions();
 }
 
 void application::execute() {

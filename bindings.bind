@@ -1,0 +1,4 @@
+close: esc
+left: ~left
+right: ~right
+jump: space

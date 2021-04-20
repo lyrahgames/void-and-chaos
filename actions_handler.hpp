@@ -1,4 +1,5 @@
 #pragma once
+#include <fstream>
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -70,7 +71,7 @@ class actions_handler {
     // This makes sure a callback can be given without a binding.
     // The binding can then be added later.
     binding() = default;
-    binding(const std::vector<event>& v)
+    explicit binding(const std::vector<event>& v)
         : events{v}, _data{std::make_unique<event_data>()} {}
 
     // Check if binding has already been created.
@@ -83,7 +84,7 @@ class actions_handler {
     // After the callback has been run, the binding must be reset.
     void reset() {
       active_events = 0;
-      *_data = {};
+      if (_data) *_data = {};
     }
     // Update activity based processed event.
     void process_event(const sf::Event& event);
@@ -95,14 +96,16 @@ class actions_handler {
     // No faster container needed.
     std::vector<event> events{};
     size_t active_events{};
-    std::unique_ptr<event_data> _data{};
+    std::unique_ptr<event_data> _data{nullptr};
   };
 
   using callback = std::function<void(const binding::event_data*)>;
 
   struct action {
-    binding bind;
-    callback call;
+    binding bind{};
+    callback call{};
+
+    bool is_valid() const { return bind.is_existent() && call; }
   };
 
  public:
@@ -138,6 +141,9 @@ class actions_handler {
   }
 
   std::vector<event> parse_binding(const string& name);
+  actions_handler& load(const string& file_path);
+
+  actions_handler& print_invalid_actions();
 
  private:
   std::unordered_map<string, action> actions;
